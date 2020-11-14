@@ -15,12 +15,14 @@ import {
   Right,
   Button,
   Badge,
+  Form,
 } from 'native-base';
 import {
   HeaderButtons,
   HeaderButton,
   Item,
 } from 'react-navigation-header-buttons';
+import {useFocusEffect} from '@react-navigation/native';
 
 const IoniconsHeaderButton = (props) => (
   // the `props` here come from <Item ... />
@@ -50,23 +52,70 @@ const ProductScreen = ({navigation}) => {
   }, [navigation]);
 
   const [product, setProduct] = useState([]);
-  useEffect(() => {
-    const getData = async () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const getData = async () => {
+    try {
+      setLoading(true);
       const res = await axios.get('https://api.codingthailand.com/api/course');
       // console.log(res.data.data);
       // alert(JSON.stringify(res.data.data));
       setProduct(res.data.data);
-    };
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      setError(error);
+    }
+  };
 
+  // useEffect(() => {
+  //   getData();
+  // }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log(getData());
+      getData();
+    }, []),
+  );
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text>เกิดข้อผิดพลาด ไม่สามารถติดต่อกับ Server ได้</Text>
+      </View>
+    );
+  }
+
+  if (loading === true) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator color="red" size="large" />
+      </View>
+    );
+  }
+
+  const _onRefresh = () => {
     getData();
-  }, []);
+  };
+
   return (
     <View>
       <FlatList
         data={product}
         keyExtractor={(item, index) => item.id.toString()}
+        onRefresh={_onRefresh}
+        refreshing={loading}
         renderItem={({item}) => (
-          <ListItem thumbnail>
+          <ListItem
+            thumbnail
+            onPress={() => {
+              navigation.navigate('Detail', {
+                id: item.id,
+                title: item.title,
+              });
+            }}>
             <Left>
               <Thumbnail square source={{uri: item.picture}} />
             </Left>
