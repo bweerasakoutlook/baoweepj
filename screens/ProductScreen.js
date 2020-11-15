@@ -54,11 +54,14 @@ const ProductScreen = ({navigation}) => {
   const [product, setProduct] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const cancelToken = axios.CancelToken.source();
 
   const getData = async () => {
-    try {
+     try {
       setLoading(true);
-      const res = await axios.get('https://api.codingthailand.com/api/course');
+      const res = await axios.get('https://api.codingthailand.com/api/course', {
+        cancelToken=CancelToken.token
+      });
       // console.log(res.data.data);
       // alert(JSON.stringify(res.data.data));
       setProduct(res.data.data);
@@ -67,6 +70,11 @@ const ProductScreen = ({navigation}) => {
       setLoading(false);
       setError(error);
     }
+
+    return () => {
+      // alert('exit product screen');
+      cancelToken.cancel()
+    };
   };
 
   // useEffect(() => {
@@ -75,7 +83,11 @@ const ProductScreen = ({navigation}) => {
 
   useFocusEffect(
     React.useCallback(() => {
-       getData();
+      getData();
+      return () => {
+        console.log('exit product screen');
+        alert('exit product screen');
+      };
     }, []),
   );
 
