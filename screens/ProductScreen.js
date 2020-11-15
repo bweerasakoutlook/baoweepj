@@ -75,8 +75,7 @@ const ProductScreen = ({navigation}) => {
 
   useFocusEffect(
     React.useCallback(() => {
-      console.log(getData());
-      getData();
+       getData();
     }, []),
   );
 
