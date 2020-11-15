@@ -1,7 +1,10 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {StyleSheet, View, ActivityIndicator, FlatList} from 'react-native';
+
 import axios from 'axios';
+
 import Ionicons from 'react-native-vector-icons/Ionicons';
+
 import {
   Container,
   Header,
@@ -15,14 +18,13 @@ import {
   Right,
   Button,
   Badge,
-  Form,
 } from 'native-base';
+
 import {
   HeaderButtons,
   HeaderButton,
   Item,
 } from 'react-navigation-header-buttons';
-import {useFocusEffect} from '@react-navigation/native';
 
 const IoniconsHeaderButton = (props) => (
   // the `props` here come from <Item ... />
@@ -35,14 +37,16 @@ const IoniconsHeaderButton = (props) => (
   />
 );
 
+import {useFocusEffect} from '@react-navigation/native';
+
 const ProductScreen = ({navigation}) => {
   React.useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: 'Product',
+      headerTitle: 'สินค้า',
       headerLeft: () => (
         <HeaderButtons HeaderButtonComponent={IoniconsHeaderButton}>
           <Item
-            title="Menu"
+            title="menu"
             iconName="menu"
             onPress={() => navigation.openDrawer()}
           />
@@ -54,15 +58,18 @@ const ProductScreen = ({navigation}) => {
   const [product, setProduct] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const cancelToken = axios.CancelToken.source();
+
+
+  // let cancelToken;
+  const cancelToken = useRef(null);
 
   const getData = async () => {
-     try {
+    try {
       setLoading(true);
-      const res = await axios.get('https://api.codingthailand.com/api/course', {
-        cancelToken=CancelToken.token
+      const res = await axios.get('https://api.codingthailand.com/api/course',{
+        // cancelToken: cancelToken.token
+        cancelToken: cancelToken.current.token
       });
-      // console.log(res.data.data);
       // alert(JSON.stringify(res.data.data));
       setProduct(res.data.data);
       setLoading(false);
@@ -71,29 +78,33 @@ const ProductScreen = ({navigation}) => {
       setError(error);
     }
 
-    return () => {
-      // alert('exit product screen');
-      cancelToken.cancel()
-    };
   };
 
   // useEffect(() => {
   //   getData();
-  // }, []);
 
+  // }, []);
   useFocusEffect(
     React.useCallback(() => {
+      console.log('getData()');
+
+      // cancelToken = axios.CancelToken.source();
+      cancelToken.current = axios.CancelToken.source();
+
       getData();
+
       return () => {
-        console.log('exit product screen');
-        alert('exit product screen');
+        // cancelToken.cancel()
+        cancelToken.current.cancel();
       };
+
     }, []),
   );
 
   if (error) {
     return (
       <View style={styles.container}>
+        <Text>{JSON.stringify(error)}</Text>
         <Text>เกิดข้อผิดพลาด ไม่สามารถติดต่อกับ Server ได้</Text>
       </View>
     );
@@ -137,7 +148,7 @@ const ProductScreen = ({navigation}) => {
               </Text>
             </Body>
             <Right>
-              <Badge success>
+              <Badge danger>
                 <Text>{item.view}</Text>
               </Badge>
             </Right>
